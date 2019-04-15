@@ -1,0 +1,82 @@
+//判断两条线段是否相接
+int IsNearOf2Lines(CURVE* pcrvFirst, CURVE* pcrvSecond)
+{
+	VECTOR ptFirstSta, ptFirstEnd;
+	geo_SenTanten(pcrvFirst, &ptFirstSta, &ptFirstEnd);
+
+	VECTOR p2Sta, p2End;
+	geo_SenTanten(pcrvSecond, &p2Sta, &p2End);
+
+	int ispntepnt=0, ispntepnt2=0;
+	if(geo_TenSenJyou(&p2Sta, pcrvFirst, g_rlgosa, g_ragosa, &ispntepnt) == GEO_TRUE)
+	{
+		return 0;
+	}
+	if(geo_TenSenJyou(&p2End, pcrvFirst, g_rlgosa, g_ragosa, &ispntepnt) == GEO_TRUE)
+	{
+		return 0;
+	}
+
+	return -1;
+}
+
+//递归查找邻接的线段
+int recursiveFindNextLine(CURVE& crvCurrent, vector<CURVE>& vecCrvList, vector<CURVE>& vecCrvList_Sorted)
+{
+	int iSizeLines = vecCrvList.size();
+
+	int idx=0, idxJ=0;
+	for (idx=0; idx<iSizeLines; idx++)
+	{
+		if (IsNearOf2Lines(&crvCurrent, &vecCrvList[idx])==0)
+		{
+			CURVE crvBak;
+			GEO_CRV_COPY(&vecCrvList[idx], &crvBak);
+			vecCrvList.erase(vecCrvList.begin()+idx);
+			vecCrvList_Sorted.push_back(crvBak);
+
+			recursiveFindNextLine(crvBak, vecCrvList, vecCrvList_Sorted);
+			break;
+		} 
+	}
+
+	return 0;
+}
+
+int sortLines(CurveItem& itLines)
+{
+	int iSizeLines = itLines.getNum();
+	if (iSizeLines == 0)
+	{
+		return -1;
+	}
+	vector<CURVE> vecCrvList, vecCrvList_Sorted, vecCrvList_Sorted2;
+	int idx=0, idxJ=0;
+	CURVE* pcrv = itLines.getYouso();
+	for (idx=1; idx<iSizeLines; idx++)
+	{
+		vecCrvList.push_back(pcrv[idx]);
+	}
+
+	vecCrvList_Sorted.push_back(*pcrv);
+	recursiveFindNextLine(vecCrvList_Sorted[0], vecCrvList, vecCrvList_Sorted);
+
+	if (vecCrvList.size() != 0)
+	{//说明选择的第一个线是中间某个线段，需要继续递归找：
+		recursiveFindNextLine(vecCrvList_Sorted[0], vecCrvList, vecCrvList_Sorted2);
+		std::reverse(vecCrvList_Sorted2.begin(),vecCrvList_Sorted2.end());
+		vecCrvList_Sorted2.insert(vecCrvList_Sorted2.end(), vecCrvList_Sorted.begin(), vecCrvList_Sorted.end());
+	}
+	else
+	{
+		vecCrvList_Sorted2 = vecCrvList_Sorted;
+	}
+
+	itLines.setVecCurve(vecCrvList_Sorted2);
+	pcrv = itLines.getYouso();
+	iSizeLines = iSizeLines;
+
+	geo_SengunSort(iSizeLines, itLines.getYouso(), g_rlgosa, g_ragosa);
+
+	return 0;
+}
