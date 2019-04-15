@@ -1,4 +1,4 @@
-//判断两条线段是否相接
+﻿//判断两条线段是否相接.
 int IsNearOf2Lines(CURVE* pcrvFirst, CURVE* pcrvSecond)
 {
 	VECTOR ptFirstSta, ptFirstEnd;
